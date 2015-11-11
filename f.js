@@ -7,27 +7,31 @@
 
 'use strict'
 
-var Scope = function() {
+var BIND_TAG_NAME = 'ff-bind',
+    BIND_MODEL_NAME = 'ff-model',
+    DIRTY_ATTR_NAME = 'ff-dirty';
+
+var $$Scope = function() {
     this.$$watchers = [];
     this.$$watchers.noWatch = true;
 };
 
-Scope.prototype.listener = function() {
+$$Scope.prototype.listener = function() {
     //
 };
 
-Scope.prototype.$$watcher = function(key, newValue, oldValue, callback) {
+$$Scope.prototype.$$watcher = function(key, newValue) {
     return {
         key: key,
-            dirty: false,
-            current: newValue
+        dirty: false,
+        current: newValue
     };
 };
 
 /**
  * register watch to an element of current scope
  */
-Scope.prototype.$watch = function(key) {
+$$Scope.prototype.$watch = function(key) {
     var watchers = this.$$watchers;
     for (var i = 0, len = watchers.length; i < len; i++) {
         var watcher = watchers[i];
@@ -36,17 +40,17 @@ Scope.prototype.$watch = function(key) {
     this.$$watchers.push(new this.$$watcher(key, this[key], this[key]));
 };
 
-Scope.prototype.$apply = function(key, value) {
+$$Scope.prototype.$apply = function(key, value) {
     // 从DOM中查找匹配key的绑定标签
     // 并进行更新操作
-    console.log(key);
-    console.log(value);
+    console.log($$Scope.activeScope);
+    dataBinder(dataBindAttrsFinder());
 };
 
 /**
  * digest check
  */
-Scope.prototype.$$digest = function() {
+$$Scope.prototype.$$digest = function() {
     var watchers = this.$$watchers;
     for (var i = 0, len = watchers.length; i < len; i++) {
         var watcher = watchers[i];
@@ -59,7 +63,7 @@ Scope.prototype.$$digest = function() {
     }
 };
 
-Scope.prototype.$$init = function() {
+$$Scope.prototype.$$init = function() {
     for (var key in this) {
         if (typeof this[key] !== 'function' && !this[key].noWatch) this.$watch(key);
     }
@@ -69,11 +73,11 @@ var $setTimeout = function(executeExpression, millSeconds) {
     return setTimeout(function() {
         executeExpression && typeof executeExpression === 'function' && executeExpression();
         executeExpression && typeof executeExpression === 'string' && eval(executeExpression);
-        scope.$$digest();
+        $$Scope.activeScope.$$digest();
     }, millSeconds);
 };
 
-var parser = function(htmlFragment) {
+var dataBindTagsFinder = function(htmlFragment) {
     var pattern = /\{{2} *[a-z|A-Z|\_|\$]+ *\}{2}|\{{2} *[a-z|A-Z|\_|\$]+\.\w+ *\}{2}/g;
     var tags = htmlFragment.match(pattern);
     if (tags && tags.length) {
@@ -90,36 +94,52 @@ var parser = function(htmlFragment) {
     return tags;
 };
 
-var executeReplace = function(scope, keys) {
-    for (var i = 0, len = keys.length; i < len; i++) {
-        scope[keys[i]]
+var dataBindAttrsFinder = function(htmlFragment) {
+    var _matchedAttrsTags = document.querySelectorAll('[' + BIND_TAG_NAME + ']');
+    var matchedAttrsTags = [];
+    for (var i = 0, len = _matchedAttrsTags.length; i < len; i++) {
+        var currentElement = _matchedAttrsTags[i];
+        if (!currentElement.hasAttribute(DIRTY_ATTR_NAME) || currentElement.getAttribute(DIRTY_ATTR_NAME)) {
+            matchedAttrsTags.push(currentElement);
+        }
+    }
+
+    return matchedAttrsTags;
+};
+
+var dataBinder = function(domsToBind) {
+    for (var i = 0, len = domsToBind.length; i < len; i++) {
+        var currentElement = domsToBind[i];
+        var key = currentElement.getAttribute(BIND_TAG_NAME);
+        if (key.indexOf('.') > -1) {
+            //var multipleKey = 
+            // todo
+        }
+        var value = $$Scope.activeScope[key];
+        currentElement.innerText = value;
+        currentElement.setAttribute(DIRTY_ATTR_NAME, 'false');
     }
 };
 
-var scope = new Scope();
-
 var F = function() {
     this.fragment = function(fragmentFun) {
-        //var scope = new Scope();
-        fragmentFun && typeof fragmentFun === 'function' && fragmentFun(scope);
-        scope.$$init();
+        var $scope = new $$Scope();
+        $$Scope.activeScope = $scope;
+        fragmentFun && typeof fragmentFun === 'function' && fragmentFun($scope);
+        $scope.$$init();
+        $setTimeout(function() {
+            $scope.name = 'victor';
+            $scope.gender = 'female';
+        }, 3000);
     };
 };
 
 var f = new F();
 
-f.fragment(function(scope) {
-    scope.name = 'victor li';
-    scope.age = 10;
+f.fragment(function($scope) {
+    $scope.name = 'victor li';
+    $scope.age = 10;
 });
 
-scope.name = 'sdsdsdsdsds';
-scope.age = 1000;
-scope.$$digest();
-console.log(scope);
-$setTimeout(function() {
-    scope.name = 'dsdsdsdsdsdsdsdsdsdsdsdsd';
-}, 3000);
-
-parser(document.getElementById('demo').innerHTML)
+dataBindTagsFinder(document.getElementById('demo').innerHTML)
 
