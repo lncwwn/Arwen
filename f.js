@@ -23,7 +23,7 @@ $$Scope.prototype.listener = function() {
 $$Scope.prototype.$$watcher = function(key, newValue) {
     return {
         key: key,
-        dirty: false,
+        dirty: true,
         current: newValue
     };
 };
@@ -37,13 +37,12 @@ $$Scope.prototype.$watch = function(key) {
         var watcher = watchers[i];
         if (watcher.key === key) return;
     }
-    this.$$watchers.push(new this.$$watcher(key, this[key], this[key]));
+    this.$$watchers.push(new this.$$watcher(key, this[key]));
 };
 
-$$Scope.prototype.$apply = function(key, value) {
+$$Scope.prototype.$apply = function() {
     // 从DOM中查找匹配key的绑定标签
     // 并进行更新操作
-    console.log($$Scope.activeScope);
     dataBinder(dataBindAttrsFinder());
 };
 
@@ -55,10 +54,11 @@ $$Scope.prototype.$$digest = function() {
     for (var i = 0, len = watchers.length; i < len; i++) {
         var watcher = watchers[i];
         var key = watcher.key;
-        if (this[key] !== watcher.current) {
-            watcher.dirty = true;
-            this.$apply(key, this[key]);
+
+        if (watcher.dirty || this[key] !== watcher.current) {
+            watcher.current = this[key];
             watcher.dirty = false;
+            this.$apply();
         }
     }
 };
@@ -130,7 +130,16 @@ var F = function() {
         $setTimeout(function() {
             $scope.name = 'victor';
             $scope.gender = 'female';
+            $scope.demo = 'hhhhhhhhhh'
         }, 3000);
+
+        document.getElementById('demo').addEventListener('click', function() {
+            $scope.demo = 'dsdsdsdsdsds';
+            $scope.$watch('demo');
+            $scope.$$digest();
+            console.log($$Scope.activeScope);
+        });
+
     };
 };
 
@@ -138,7 +147,7 @@ var f = new F();
 
 f.fragment(function($scope) {
     $scope.name = 'victor li';
-    $scope.age = 10;
+    $scope.gender = 'male';
 });
 
 dataBindTagsFinder(document.getElementById('demo').innerHTML)
