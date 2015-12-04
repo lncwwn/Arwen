@@ -27,7 +27,7 @@ class Fragment {
      */
     _watch(key) {
         const watchers = this._watchers;
-        watchers.forEach((item, index) => {
+        watchers.forEach((item) => {
             if (item.key === key) {
                 return;
             }
@@ -39,7 +39,7 @@ class Fragment {
     }
     _digest() {
         let _watchers = this.watchers;
-        _watchers.forEach((_watcher, index) => {
+        _watchers.forEach((_watcher) => {
             if (_watcher.dirty || this[_watcher.key] !== _watcher.last) {
                 _watcher.last = this[_watcher[key]];
                 _watcher.dirty = false;
@@ -49,11 +49,11 @@ class Fragment {
     }
     init() {
         const _keys = Object.keys(this);
-        _keys.forEach((_key, index) => {
-            typeof this[_key] !== 'function' && !this[_key].noWatch && this_watch(_key);
+        _keys.forEach((_key) => {
+            typeof this[_key] !== 'function' && !this[_key].noWatch && this._watch(_key);
         });
     }
 }
 
-export { Fragment };
+export default Fragment;
 

@@ -7,7 +7,7 @@
 
 'use strict';
 
-import Constants from 'constants.js'
+import Constants from './constants'
 
 class Marker = function() {
     constructor() {

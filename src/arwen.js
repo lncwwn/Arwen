@@ -7,11 +7,11 @@
 
 'use strict';
 
-import Fragment from 'fragment.js'
+import Fragment from './fragment'
 
 class Arwen {
-    constructor(fragmentFun) {
-        this.fragment = () => {
+    constructor() {
+        this.fragment = (fragmentFun) => {
             let fragment = new Fragment();
             Fragment.activeFragment = fragment;
             fragmentFun && typeof fragmentFun === 'function' && fragmentFun(fragment);
@@ -23,4 +23,4 @@ class Arwen {
     }
 };
 
-export { Arwen };
+export default Arwen;
